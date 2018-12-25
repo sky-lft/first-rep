@@ -1,1 +1,119 @@
-ssssss
+/**
+ * Copyright (C), 1993-2018, sky-lifutao Co.,Ltd
+ * FileName: HttpClientHelper
+ * Author:   sky
+ * Date:     2018/12/25 23:47
+ * Description: HttpClient工具
+ * History:
+ * <author>          <time>          <version>          <desc>
+ * 作者姓名           修改时间           版本号              描述
+ */
+package com.sky.java.basic.demo.httpclient;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.hibernate.validator.internal.util.privilegedactions.GetMethod;
+import org.jboss.logging.Logger;
+import org.springframework.http.HttpMethod;
+import sun.misc.BASE64Encoder;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+
+/**
+ * 〈一句话功能简述〉<br> 
+ * 〈HttpClient工具〉
+ *
+ * @author sky
+ * @create 2018/12/25
+ * @since 1.0.0
+ */
+public class HttpClientHelper {
+    private static Logger log = Logger.getLogger(HttpClientHelper.class);
+
+    private static List<String> mineTypeList = new ArrayList<String>();
+
+    static {
+        mineTypeList.add("application/octet-stream");
+        mineTypeList.add("application/pdf");
+        mineTypeList.add("application/msword");
+
+        mineTypeList.add("image/png");
+        mineTypeList.add("image/jpg");
+        mineTypeList.add("image/jpeg");
+        mineTypeList.add("image/gif");
+        mineTypeList.add("image/bmp");
+
+        mineTypeList.add("audio/amr");
+        mineTypeList.add("audio/mp3");
+        mineTypeList.add("audio/aac");
+        mineTypeList.add("audio/wma");
+        mineTypeList.add("audio/wav");
+
+        mineTypeList.add("video/mpeg");
+    }
+
+    /***
+     * HttpClient GET请求，Header参数
+     *
+     * @return 响应字符串
+     * @author Jie
+     * @date 2015年7月7日
+     */
+    public String getMethodInfo(String url) throws IOException {
+        try {
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            HttpGet method = new HttpGet(url);
+            HttpResponse response = httpClient.execute(method);
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                InputStream instream = entity.getContent();
+                //把本地文件 转化成byte[]
+                ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int len = 0;
+                while( (len=instream.read(buffer)) != -1 ){
+                    outStream.write(buffer, 0, len);
+                }
+                byte [] data = outStream.toByteArray();//转化成byte[] 网络上都是 byte [] data = new byte[inputStream.available()];这种方法不可取
+//关闭流
+                outStream.close();
+                instream.close();
+//创建 BASE64Encoder 用来加密
+                BASE64Encoder base64Encoder = new BASE64Encoder();
+//加密后字符串 校验是否正确,可以用网上在线工具去校验
+                String str = base64Encoder.encode(data);
+                return str;
+
+            }
+            // 关闭连接.
+            httpClient.getConnectionManager().shutdown();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+}
+
+    public static void main(String[] args) {
+        try {
+            String a =  new HttpClientHelper().getMethodInfo("http://localhost:8024/v1/uploadDownload/downloadImage?name=system.jpg");
+            File file = new File("f:/output/tupian.txt");
+           String filePath = "f:/output/tupian.txt";
+           if(!file.exists()){
+               file.getParentFile().mkdirs();
+               file.createNewFile();
+           }
+            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+            byte [] array = a.getBytes();
+            fileOutputStream.write(array);
+             fileOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
