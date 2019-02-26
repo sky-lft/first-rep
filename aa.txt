@@ -5,3 +5,137 @@ git is cool
 asasx
 asxau
 auhxuasxauxshuhh00000000000000
+
+https://my.oschina.net/JavaLaw/blog/1581419
+https://blog.csdn.net/u014091123/article/details/75433656
+
+https://stackoverflow.com/questions/49289584/spring-cloud-zuul-and-groovy-filters
+
+
+
+https://github.com/ExampleDriven/spring-cloud-zuul-example/blob/master/zuul-server/src/main/resources/groovy/ExampleSurgicalDebugFilterBean.groovy
+
+
+
+
+
+
+2
+
+
+1
+I have a Zuul Gateway running based on the Spring Cloud Netflix package. I also created a Zuul "groovy" based filter as shown in the blog here. When I added the groovy file, as the IDE / compiler complained that there is no groovy library on the classpath, I also had to add the below jar to my pom.xml to allow for compiling groovy files to the project -
+
+<dependency>
+    <groupId>org.codehaus.groovy</groupId>
+    <artifactId>groovy-all</artifactId>
+    <version>2.3.10</version>
+</dependency>
+From this point, my groovy filter is loaded as expected and is evaluated for every incoming request to Zuul. All is well so far except when I tried modifying the groovy file, I don't see that the changes to my file picked up dynamically unless I restart the server.
+
+I am very new to Groovy. What should I be doing to take advantage of the dynamic nature of the Groovy filters in the context of Netflix Zuul and its filters. The pain Zuul library from Netflix scans a particular directory for Groovy filters. Is there anything like that for Spring cloud wrapper of Netflix Zuul?
+
+Please note that I have read that Spring 4 supports dynamic languages like groovy etc, but using that requires configuration of XML file with lang:groovy etc.
+
+But, in my case - with Spring Cloud Netflix libraries, without the XML config file for groovy classes, I was able to get the Spring Cloud / Zuul library pick up my groovy class. I am unable to refresh it dynamically and would like to know if there is a way to do it.
+
+I did read through the spring-cloud documentation and I dont see any information about loading groovy filters except for a single statement - Zuul’s rule engine allows rules and filters to be written in essentially any JVM language, with built in support for Java and Groovy.
+
+Please advice.
+
+java groovy netflix-zuul spring-cloud-netflix
+shareimprove this question
+asked Mar 15 '18 at 0:10
+
+Satya
+4461020
+add a comment
+1 Answer
+active oldest votes
+
+1
+
+So, I figured it out by looking at the github netflix zuul wiki.
+
+For anyone else who is having this question and is looking for an easy answer, here you go, I am saving some time in your day :)
+
+Step 1 - Added the groovy-all jar to classpath
+
+<dependency>
+    <groupId>org.codehaus.groovy</groupId>
+    <artifactId>groovy-all</artifactId>
+    <version>2.3.10</version>
+</dependency>
+Step 2 - Placed files in the src/main/resources path with the folder structure
+
+    groovy
+    └── pre
+    └── route
+    └── post
+Step 3 - Configured Groovy filter path in my application.yml -
+
+zuul:
+  groovyFiltersPath:
+    - groovy/pre
+    - groovy/route
+    - groovy/post
+Step 4 - Injecting the yaml config in the Zuul Spring Boot App
+
+@Component
+@EnableConfigurationProperties
+@ConfigurationProperties(prefix = "zuul")
+public class CustomPathZuulFilterConfig {
+
+    private List<String> groovyFiltersPath;
+
+    public List<String> getGroovyFiltersPath() {
+        return groovyFiltersPath;
+    }
+
+    public void setGroovyFiltersPath(List<String> groovyFiltersPath) {
+        this.groovyFiltersPath = groovyFiltersPath;
+    }
+}
+Step 5 - Finally, initializing the Groovy Filter Loader and File Manager
+
+@Component
+public class GroovyFiltersInitializer {
+
+    private Logger logger = LoggerFactory.getLogger(GroovyFiltersInitializer.class);
+
+    @Autowired
+    private CustomPathZuulFilterConfig config;
+
+    @PostConstruct
+    private void initGroovyFilters() throws Exception {
+
+        List<String> groovyFiltersPath = config.getGroovyFiltersPath();
+
+        if(groovyFiltersPath == null || groovyFiltersPath.size() == 0) {
+            return;
+        }
+
+        FilterLoader.getInstance().setCompiler(new GroovyCompiler());
+        FilterFileManager.setFilenameFilter(new GroovyFileFilter());
+
+        String[] filterDirectoryList = groovyFiltersPath.toArray(new String[0]);
+        FilterFileManager.init(5, filterDirectoryList);
+
+        logger.info("Groovy Filter file manager started");
+    }
+}
+Now, any changes to the groovy filters should be picked up dynamically.
+
+Specific to IntelliJ users - For checking if the changes to your groovy files are picked up or not, you need to change the files under the debugger "out" directory and not the files under the src/main/resources/groovy directory. That is because, the application runs off the code based in the "out" directory. However, to debug your changes - you have to make changes at both "out" and src/main/resources/groovy directory as IntelliJ does not copy the files to "out" while the app is running. Hope this is helpful.
+
+Good luck!
+
+shareimprove this answer
+answered Mar 15 '18 at 19:51
+
+Satya
+4461020
+this is good stuff. question: how is the GroovyFiltersInitializer wired to your app? is it automatically loaded/instantiated even if not referenced anywhere in your app via @Autowire/@Inject – Dexter Legaspi Jan 12 at 18:09
+1
+@dexter I remember autowiring it to one of my application classfiles to ensure instantiation. – Satya Jan 13 at 2:41
+Thank you @Satya, that's what I ended up doing. – Dexter Legaspi Jan 13 at 15:37
