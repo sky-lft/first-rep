@@ -1,5 +1,4 @@
-asasasas
-3333333333333333333333
+https://blog.csdn.net/zhou8622/article/details/79389450
 kabsgdciuasgcdig
 git is cool
 asasx
@@ -21,7 +20,7 @@ https://sixdegree.github.io/
 https://blog.csdn.net/Message_lx/article/details/79296303
 https://crossoverjie.top/2017/08/01/sbc3/
 2
-
+https://blog.csdn.net/zhou8622/article/details/79389450
 
 1
 I have a Zuul Gateway running based on the Spring Cloud Netflix package. I also created a Zuul "groovy" based filter as shown in the blog here. When I added the groovy file, as the IDE / compiler complained that there is no groovy library on the classpath, I also had to add the below jar to my pom.xml to allow for compiling groovy files to the project -
