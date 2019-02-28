@@ -15,10 +15,10 @@ https://stackoverflow.com/questions/49289584/spring-cloud-zuul-and-groovy-filter
 
 https://github.com/ExampleDriven/spring-cloud-zuul-example/blob/master/zuul-server/src/main/resources/groovy/ExampleSurgicalDebugFilterBean.groovy
 
+https://juejin.im/post/5b7287ea51882561381e6f89
 
-
-
-
+https://sixdegree.github.io/
+https://blog.csdn.net/Message_lx/article/details/79296303
 
 2
 
